@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.guis.GuiKitMenu;
+import net.bukkit.faris.kingkits.helpers.KitStack;
 import net.bukkit.faris.kingkits.listeners.commands.SetKit;
-import net.bukkit.faris.kingkits.listeners.event.custom.PlayerKillEvent;
+import net.bukkit.faris.kingkits.listeners.event.custom.PlayerKilledEvent;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -21,6 +24,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -34,6 +40,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 
 public class PlayerListener implements Listener {
 	private final KingKits plugin;
@@ -49,7 +58,7 @@ public class PlayerListener implements Listener {
 		try {
 			if (event.getEntity() != null) {
 				if (event.getEntity().getKiller() != null) {
-					if (event.getEntity().getName() != event.getEntity().getKiller().getName()) event.getEntity().getServer().getPluginManager().callEvent(new PlayerKillEvent(event.getEntity().getKiller(), event.getEntity()));
+					if (event.getEntity().getName() != event.getEntity().getKiller().getName()) event.getEntity().getServer().getPluginManager().callEvent(new PlayerKilledEvent(event.getEntity().getKiller(), event.getEntity()));
 				}
 			}
 		} catch (Exception ex) {
@@ -101,7 +110,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Lets players create a sign kit **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void createKitSign(PlayerInteractEvent event) {
 		try {
 			if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -132,7 +141,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Lets player's use sign kits **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void changeKits(PlayerInteractEvent event) {
 		try {
 			if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -227,7 +236,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Remove a player's kit when they get kicked **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void removeKitOnKick(PlayerKickEvent event) {
 		try {
 			Player p = event.getPlayer();
@@ -249,7 +258,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Bans item dropping **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void banDropItem(PlayerDropItemEvent event) {
 		try {
 			if (event.getItemDrop() != null) {
@@ -293,6 +302,19 @@ public class PlayerListener implements Listener {
 								this.getPlugin().playerScores.remove(killer.getName());
 								if (newScore > this.getPlugin().configValues.maxScore) newScore = this.getPlugin().configValues.maxScore;
 								this.getPlugin().playerScores.put(killer.getName(), newScore);
+
+								if (this.getPlugin().configValues.scoreboards) {
+									Scoreboard pScoreboard = killer.getScoreboard();
+									if (pScoreboard == null) pScoreboard = killer.getServer().getScoreboardManager().getNewScoreboard();
+									Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
+									if (sObj == null) {
+										sObj = pScoreboard.registerNewObjective("test", "dummy");
+										sObj.setDisplayName(ChatColor.RED + "KingKits");
+										sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+									}
+									sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(newScore);
+									killer.setScoreboard(pScoreboard);
+								}
 							} catch (Exception ex) {
 							}
 						}
@@ -304,14 +326,14 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Makes players have a chat prefix with their score **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void scoreChat(AsyncPlayerChatEvent event) {
 		try {
 			if (this.getPlugin().configValues.scores) {
 				if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getWorld().getName())) {
 					Player p = event.getPlayer();
 					if (!this.getPlugin().playerScores.containsKey(p.getName())) this.getPlugin().playerScores.put(p.getName(), 0);
-					event.setFormat(this.getPlugin().replaceAllColours(this.getPlugin().configValues.scoreFormat).replaceAll("<score>", String.valueOf(this.getPlugin().playerScores.get(p.getName()))) + " " + event.getFormat());
+					event.setFormat(this.getPlugin().replaceAllColours(this.getPlugin().configValues.scoreFormat).replaceAll("<score>", String.valueOf(this.getPlugin().playerScores.get(p.getName()))) + ChatColor.WHITE + " " + event.getFormat());
 				}
 			}
 		} catch (Exception ex) {
@@ -342,7 +364,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Removes potion effects of a player when they get kicked **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void kickRemovePotionEffects(PlayerKickEvent event) {
 		try {
 			if (this.getPlugin().configValues.removePotionEffectsOnLeave) {
@@ -365,7 +387,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Makes it so when you right click with a compass, you track the nearest player **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void rightClickCompass(PlayerInteractEvent event) {
 		try {
 			if (this.getPlugin().configValues.rightClickCompass) {
@@ -411,7 +433,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Makes compass trackers track the new location of their target **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void compassTrackMove(PlayerMoveEvent event) {
 		try {
 			if (this.getPlugin().configValues.rightClickCompass) {
@@ -466,7 +488,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Makes compass trackers lose their target when they get kicked or their target gets kicked **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void compassTrackerKick(PlayerKickEvent event) {
 		try {
 			if (this.getPlugin().configValues.rightClickCompass) {
@@ -494,7 +516,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Allows players to right click with soup and instantly drink it to be healed or fed **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void quickSoup(PlayerInteractEvent event) {
 		try {
 			if (event.getItem() != null) {
@@ -547,7 +569,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Disables block breaking **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void disableBlockBreaking(BlockBreakEvent event) {
 		try {
 			if (this.getPlugin().configValues.banBlockBreakingAndPlacing) {
@@ -564,7 +586,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Disables block placing **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void disableBlockPlacing(BlockPlaceEvent event) {
 		try {
 			if (this.getPlugin().configValues.banBlockBreakingAndPlacing) {
@@ -585,9 +607,7 @@ public class PlayerListener implements Listener {
 	public void disableDeathMessages(PlayerDeathEvent event) {
 		try {
 			if (event.getEntityType() == EntityType.PLAYER) {
-				if (this.getPlugin().configValues.banBlockBreakingAndPlacing) {
-					if (this.getPlugin().configValues.disableDeathMessages) event.setDeathMessage("");
-				}
+				if (this.getPlugin().configValues.disableDeathMessages) if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getEntity().getWorld().getName())) event.setDeathMessage("");
 			}
 		} catch (Exception ex) {
 		}
@@ -595,15 +615,13 @@ public class PlayerListener implements Listener {
 
 	/** Locks hunger bars so players can't lose hunger **/
 	@EventHandler
-	public void lockHunger(PlayerMoveEvent event) {
+	public void lockHunger(FoodLevelChangeEvent event) {
 		try {
+
 			if (this.getPlugin().configValues.lockHunger) {
-				if (event.getPlayer().getWorld() != null) {
-					if (event.getPlayer().getFoodLevel() < event.getPlayer().getMaxHealth()) {
-						if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getWorld().getName())) event.getPlayer().setFoodLevel(event.getPlayer().getMaxHealth());
-					}
-				} else {
-					if (event.getPlayer().getFoodLevel() < event.getPlayer().getMaxHealth()) event.getPlayer().setFoodLevel(event.getPlayer().getMaxHealth());
+				if (event.getEntity() instanceof Player) {
+					Player p = (Player) event.getEntity();
+					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(p.getWorld().getName())) event.setFoodLevel(20);
 				}
 			}
 		} catch (Exception ex) {
@@ -612,18 +630,11 @@ public class PlayerListener implements Listener {
 
 	/** Gives a player money when they kill another player **/
 	@EventHandler
-	public void moneyPerKill(PlayerKillEvent event) {
+	public void moneyPerKill(PlayerKilledEvent event) {
 		try {
 			Player killer = event.getPlayer();
 			if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useMoneyPerKill) {
-				if (killer.getWorld() != null) {
-					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(killer.getWorld().getName())) {
-						net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
-						if (!economy.hasAccount(killer.getName())) economy.createPlayerAccount(killer.getName());
-						economy.depositPlayer(killer.getName(), this.getPlugin().configValues.vaultValues.moneyPerKill);
-						killer.sendMessage(this.getPlugin().getMPKMessage(event.getDead(), this.getPlugin().configValues.vaultValues.moneyPerKill));
-					}
-				} else {
+				if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(killer.getWorld().getName())) {
 					net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
 					if (!economy.hasAccount(killer.getName())) economy.createPlayerAccount(killer.getName());
 					economy.depositPlayer(killer.getName(), this.getPlugin().configValues.vaultValues.moneyPerKill);
@@ -641,13 +652,7 @@ public class PlayerListener implements Listener {
 			if (event.getEntity().getKiller() != null) {
 				if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useMoneyPerDeath) {
 					if (!event.getEntity().getName().equalsIgnoreCase(event.getEntity().getKiller().getName())) {
-						if (event.getEntity().getWorld() != null) {
-							if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getEntity().getKiller().getWorld().getName())) {
-								net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
-								economy.withdrawPlayer(event.getEntity().getName(), this.getPlugin().configValues.vaultValues.moneyPerDeath);
-								event.getEntity().sendMessage(this.getPlugin().getMPDMessage(event.getEntity(), this.getPlugin().configValues.vaultValues.moneyPerDeath));
-							}
-						} else {
+						if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getEntity().getKiller().getWorld().getName())) {
 							net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
 							economy.withdrawPlayer(event.getEntity().getName(), this.getPlugin().configValues.vaultValues.moneyPerDeath);
 							event.getEntity().sendMessage(this.getPlugin().getMPDMessage(event.getEntity(), this.getPlugin().configValues.vaultValues.moneyPerDeath));
@@ -660,7 +665,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Removes the kit and clears a player's inventory when the player changes worlds **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void removeKitOnWorldChange(PlayerChangedWorldEvent event) {
 		try {
 			if (!this.getPlugin().configValues.pvpWorlds.contains("All") && !this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getLocation().getWorld().getName())) {
@@ -676,15 +681,13 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Disables gamemode changes while using a kit **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void disableGamemode(PlayerGameModeChangeEvent event) {
 		try {
 			if (this.getPlugin().configValues.disableGamemode) {
-				if (event.getNewGameMode() != GameMode.SURVIVAL) {
-					if (this.plugin.configValues.opBypass && event.getPlayer().isOp()) return;
-					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getLocation().getWorld().getName())) {
-						if (this.plugin.usingKits.containsKey(event.getPlayer().getName())) event.setCancelled(true);
-					}
+				if (event.getNewGameMode() == GameMode.CREATIVE) {
+					if (this.getPlugin().configValues.opBypass && event.getPlayer().isOp()) return;
+					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getWorld().getName())) event.setCancelled(true);
 				}
 			}
 		} catch (Exception ex) {
@@ -693,12 +696,12 @@ public class PlayerListener implements Listener {
 
 	/** Update killstreaks and runs commands (if they exist in the configuration) when a player kills another player **/
 	@EventHandler
-	public void updateKillstreak(PlayerKillEvent event) {
+	public void updateKillstreak(PlayerKilledEvent event) {
 		try {
 			if (this.getPlugin().configValues.killstreaks) {
 				if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getWorld().getName())) {
 					if (!this.getPlugin().playerKillstreaks.containsKey(event.getPlayer().getName())) this.getPlugin().playerKillstreaks.put(event.getPlayer().getName(), 0L);
-					
+
 					long currentKillstreak = this.getPlugin().playerKillstreaks.get(event.getPlayer().getName());
 					if (currentKillstreak + 1L > Long.MAX_VALUE - 1) this.getPlugin().playerKillstreaks.put(event.getPlayer().getName(), 0L);
 					else this.getPlugin().playerKillstreaks.put(event.getPlayer().getName(), this.getPlugin().playerKillstreaks.get(event.getPlayer().getName()) + 1L);
@@ -708,6 +711,22 @@ public class PlayerListener implements Listener {
 						List<String> killstreakCommands = this.getPlugin().getKillstreaksConfig().getStringList("Killstreak " + currentKillstreak);
 						for (String killstreakCommand : killstreakCommands)
 							event.getPlayer().getServer().dispatchCommand(event.getPlayer().getServer().getConsoleSender(), killstreakCommand.replaceAll("<player>", event.getPlayer().getName()).replaceAll("<killstreak>", "" + currentKillstreak));
+					}
+
+					if (this.getPlugin().configValues.scoreboards) {
+						Scoreboard pScoreboard = event.getPlayer().getScoreboard();
+						if (pScoreboard == null) event.getPlayer().getServer().getScoreboardManager().getNewScoreboard();
+						Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
+						if (sObj == null) {
+							sObj = pScoreboard.registerNewObjective("test", "dummy");
+							sObj.setDisplayName(ChatColor.RED + "KingKits");
+							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+						}
+						int pKillstreak = 0;
+						if (currentKillstreak <= Integer.MAX_VALUE) pKillstreak = Integer.parseInt(String.valueOf(currentKillstreak));
+						else pKillstreak = Integer.MAX_VALUE;
+						sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(pKillstreak);
+						event.getPlayer().setScoreboard(pScoreboard);
 					}
 				}
 			}
@@ -721,7 +740,20 @@ public class PlayerListener implements Listener {
 		try {
 			if (this.getPlugin().configValues.killstreaks) {
 				if (event.getEntity() != null) {
-					if (event.getEntity().getKiller() != null) this.getPlugin().playerKillstreaks.remove(event.getEntity().getName());
+					this.getPlugin().playerKillstreaks.remove(event.getEntity().getName());
+
+					if (this.getPlugin().configValues.scoreboards) {
+						Scoreboard pScoreboard = event.getEntity().getScoreboard();
+						if (pScoreboard == null) pScoreboard = event.getEntity().getServer().getScoreboardManager().getNewScoreboard();
+						Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
+						if (sObj == null) {
+							sObj = pScoreboard.registerNewObjective("test", "dummy");
+							sObj.setDisplayName(ChatColor.RED + "KingKits");
+							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+						}
+						sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(0);
+						event.getEntity().setScoreboard(pScoreboard);
+					}
 				}
 			}
 		} catch (Exception ex) {
@@ -740,7 +772,7 @@ public class PlayerListener implements Listener {
 	}
 
 	/** Update killstreaks when a player gets kicked **/
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void removeKillstreakOnKick(PlayerKickEvent event) {
 		try {
 			if (this.getPlugin().configValues.killstreaks) {
@@ -750,9 +782,221 @@ public class PlayerListener implements Listener {
 		}
 	}
 
+	/** Make weapons unbreakable **/
+	@EventHandler(ignoreCancelled = true)
+	public void noWeaponBreakDamage(EntityDamageByEntityEvent event) {
+		try {
+			if (this.getPlugin().configValues.disableItemBreaking) {
+				if (event.getDamager() instanceof Player) {
+					Player p = (Player) event.getDamager();
+					if (p.getGameMode() == GameMode.SURVIVAL) {
+						if (this.getPlugin().usingKits.containsKey(p.getName())) p.getItemInHand().setDurability((short) 1);
+					}
+				}
+				if (event.getEntity() instanceof Player) {
+					Player p = (Player) event.getEntity();
+					if (p.getGameMode() == GameMode.SURVIVAL) {
+						if (this.getPlugin().usingKits.containsKey(p.getName())) {
+							ItemStack[] armour = p.getInventory().getArmorContents();
+							for (ItemStack i : armour)
+								i.setDurability((short) 0);
+							p.getInventory().setArmorContents(armour);
+						}
+					}
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	/** Make bows unbreakable **/
+	@EventHandler(ignoreCancelled = true)
+	public void noWeaponBreakDamage(EntityShootBowEvent event) {
+		try {
+			if (this.getPlugin().configValues.disableItemBreaking) {
+				if (event.getEntity() instanceof Player) {
+					Player p = (Player) event.getEntity();
+					if (this.getPlugin().usingKits.containsKey(p.getName())) event.getBow().setDurability((short) 1);
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	/** Make items unbreakable **/
+	@EventHandler(ignoreCancelled = true)
+	public void noWeaponBreakDamage(PlayerInteractEvent event) {
+		try {
+			if (this.getPlugin().configValues.disableItemBreaking) {
+				if (event.getItem() != null) {
+					if (this.getPlugin().usingKits.containsKey(event.getPlayer().getName())) {
+						if (this.isTool(event.getItem().getType()) || event.getItem().getType() == Material.FISHING_ROD || event.getItem().getType() == Material.FLINT_AND_STEEL) event.getItem().setDurability((short) 1);
+					}
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void kitMenuOnJoin(PlayerJoinEvent event) {
+		try {
+			if (this.getPlugin().configValues.kitMenuOnJoin) {
+				final Player p = event.getPlayer();
+				p.getServer().getScheduler().scheduleSyncDelayedTask(this.getPlugin(), new Runnable() {
+					public void run() {
+						if (p != null) {
+							if (p.isOnline()) {
+								if (!GuiKitMenu.playerMenus.contains(p.getName())) {
+									List<String> kitList = new ArrayList<String>();
+									if (getPlugin().getKitsConfig().contains("Kits")) kitList = getPlugin().getKitsConfig().getStringList("Kits");
+									KitStack[] kitStacks = new KitStack[kitList.size()];
+									boolean modifiedConfig = false;
+									for (int i = 0; i < kitList.size(); i++) {
+										String kitName = kitList.get(i);
+										try {
+											if (kitName.contains(" ")) kitName = kitName.split(" ")[0];
+										} catch (Exception ex) {
+										}
+										try {
+											ItemStack itemStack = new ItemStack(Material.DIAMOND_SWORD, 1);
+											if (getPlugin().getGuiItemsConfig().contains(kitName)) {
+												String guiItemSplit[] = getPlugin().getGuiItemsConfig().getString(kitName).split(" ");
+												if (guiItemSplit.length > 1) {
+													try {
+														itemStack = new ItemStack(Integer.parseInt(guiItemSplit[0]), 1);
+														itemStack.setDurability(Short.parseShort(guiItemSplit[1]));
+													} catch (Exception ex) {
+														continue;
+													}
+												} else itemStack = new ItemStack(Integer.parseInt(guiItemSplit[0]), 1);
+											} else {
+												getPlugin().getGuiItemsConfig().set(kitName, itemStack.getType().getId());
+												modifiedConfig = true;
+											}
+											kitStacks[i] = new KitStack(kitName, itemStack);
+										} catch (Exception ex) {
+											getPlugin().getGuiItemsConfig().set(kitName, Material.DIAMOND_SWORD.getId());
+											modifiedConfig = true;
+											continue;
+										}
+									}
+									if (modifiedConfig) {
+										getPlugin().saveGuiItemsConfig();
+										getPlugin().reloadGuiItemsConfig();
+									}
+									ChatColor menuColour = !kitList.isEmpty() ? ChatColor.DARK_BLUE : ChatColor.RED;
+									new GuiKitMenu(p, menuColour + "PvP Kits", kitStacks).openMenu();
+								}
+							}
+						}
+					}
+				}, 20L);
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	@EventHandler(priority = EventPriority.LOW)
+	public void playerScoreboardJoin(PlayerJoinEvent event) {
+		try {
+			if (this.getPlugin().configValues.scoreboards) {
+				if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getLocation().getWorld().getName())) {
+					this.showScoreboard(event.getPlayer());
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
+	public void playerScoreboardWorld(PlayerChangedWorldEvent event) {
+		try {
+			if (this.getPlugin().configValues.scoreboards) {
+				if (!this.getPlugin().configValues.pvpWorlds.contains("All") && this.getPlugin().configValues.pvpWorlds.contains(event.getFrom().getName()) && !this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getLocation().getWorld().getName())) {
+					Scoreboard currentScoreboard = event.getPlayer().getScoreboard();
+					if (currentScoreboard == null) currentScoreboard = event.getPlayer().getServer().getScoreboardManager().getNewScoreboard();
+					Objective sObj = currentScoreboard.getObjective(DisplaySlot.SIDEBAR);
+					if (sObj != null) {
+						currentScoreboard.resetScores(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:"));
+						currentScoreboard.resetScores(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:"));
+					}
+					event.getPlayer().setScoreboard(currentScoreboard);
+				}
+				if (!this.getPlugin().configValues.pvpWorlds.contains("All") && !this.getPlugin().configValues.pvpWorlds.contains(event.getFrom().getName()) && this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getWorld().getName())) this.showScoreboard(event.getPlayer());
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	@EventHandler
+	public void playerScoreboardLeave(PlayerQuitEvent event) {
+		try {
+			Scoreboard pScoreboard = event.getPlayer().getScoreboard();
+			if (pScoreboard != null) {
+				if (pScoreboard.getObjective(DisplaySlot.SIDEBAR) != null) {
+					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(null);
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	@EventHandler
+	public void playerScoreboardKicked(PlayerQuitEvent event) {
+		try {
+			Scoreboard pScoreboard = event.getPlayer().getScoreboard();
+			if (pScoreboard != null) {
+				if (pScoreboard.getObjective(DisplaySlot.SIDEBAR) != null) {
+					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(null);
+				}
+			}
+		} catch (Exception ex) {
+		}
+	}
+
+	/** Shows the KingKits Scoreboard to a player **/
+	public void showScoreboard(Player p) {
+		if (this.getPlugin().configValues.scoreboards) {
+			Scoreboard currentScoreboard = p.getScoreboard();
+			if (currentScoreboard == null) currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
+			Objective sObj = currentScoreboard.getObjective(DisplaySlot.SIDEBAR);
+			if (sObj == null) {
+				sObj = currentScoreboard.registerNewObjective("test", "dummy");
+				sObj.setDisplayName(ChatColor.RED + "KingKits");
+				sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+			} else {
+				if (this.getPlugin().configValues.scores) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(0);
+				if (this.getPlugin().configValues.killstreaks) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(0);
+			}
+			if (this.getPlugin().configValues.scores) {
+				int playerScore = 0;
+				if (this.getPlugin().playerScores.containsKey(p.getName())) {
+					long currentScore = (long) this.getPlugin().playerScores.get(p.getName());
+					playerScore = (currentScore <= Integer.MAX_VALUE) ? (int) this.getPlugin().playerScores.get(p.getName()) : Integer.MAX_VALUE;
+				}
+				sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(playerScore);
+			}
+			if (this.getPlugin().configValues.killstreaks) {
+				int playerKillstreak = 0;
+				if (this.getPlugin().playerKillstreaks.containsKey(p.getName())) {
+					long currentKillstreak = this.getPlugin().playerKillstreaks.get(p.getName());
+					playerKillstreak = (currentKillstreak <= Integer.MAX_VALUE) ? Integer.parseInt(String.valueOf(this.getPlugin().playerKillstreaks.get(p.getName()))) : Integer.MAX_VALUE;
+				}
+				sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(playerKillstreak);
+			}
+			p.setScoreboard(currentScoreboard);
+		}
+	}
+
 	/** Gets the plugin instance **/
 	private KingKits getPlugin() {
 		return this.plugin;
+	}
+
+	/** Returns if a material is a tool/sword **/
+	private boolean isTool(Material material) {
+		return material == Material.WOOD_SWORD || material == Material.STONE_SWORD || material == Material.GOLD_SWORD || material == Material.IRON_SWORD || material == Material.DIAMOND_SWORD || material == Material.WOOD_PICKAXE || material == Material.STONE_PICKAXE || material == Material.GOLD_PICKAXE || material == Material.IRON_PICKAXE || material == Material.DIAMOND_PICKAXE || material == Material.WOOD_AXE || material == Material.STONE_AXE || material == Material.GOLD_AXE || material == Material.IRON_AXE || material == Material.DIAMOND_AXE || material == Material.WOOD_SPADE || material == Material.STONE_SPADE || material == Material.GOLD_SPADE || material == Material.IRON_SPADE || material == Material.DIAMOND_SPADE || material == Material.WOOD_HOE || material == Material.STONE_HOE || material == Material.GOLD_HOE || material == Material.IRON_HOE || material == Material.DIAMOND_HOE;
 	}
 
 	/** Returns a list of lower case strings **/

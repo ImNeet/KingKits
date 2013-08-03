@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
-import net.bukkit.faris.kingkits.helpers.ConfigCommand;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -12,7 +11,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@SuppressWarnings("unused")
 public abstract class KingCommand implements CommandExecutor {
 	private KingKits plugin = null;
 

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
-import net.bukkit.faris.kingkits.guis.GuiMenu;
+import net.bukkit.faris.kingkits.Language;
+import net.bukkit.faris.kingkits.guis.GuiKitMenu;
 import net.bukkit.faris.kingkits.helpers.KitStack;
 import net.bukkit.faris.kingkits.listeners.PlayerCommand;
 
@@ -26,7 +27,7 @@ public class KitCommand extends PlayerCommand {
 				if (this.getPlugin().cmdValues.pvpKits) {
 					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(p.getWorld().getName())) {
 						if (args.length == 0) {
-							if (!this.getPlugin().configValues.kitListMode.equalsIgnoreCase("Gui")) {
+							if (!this.getPlugin().configValues.kitListMode.equalsIgnoreCase("Gui") && !this.getPlugin().configValues.kitListMode.equalsIgnoreCase("Menu")) {
 								List<String> kitList = new ArrayList<String>();
 								if (this.getPlugin().getKitsConfig().contains("Kits")) {
 									kitList = this.getPlugin().getKitsConfig().getStringList("Kits");
@@ -45,12 +46,12 @@ public class KitCommand extends PlayerCommand {
 									p.sendMessage(r("&4There are no kits"));
 								}
 							} else {
-								List<String> kitList = new ArrayList<String>();
-								if (this.getPlugin().getKitsConfig().contains("Kits")) kitList = this.getPlugin().getKitsConfig().getStringList("Kits");
-								KitStack[] kitStacks = new KitStack[kitList.size()];
-								boolean modifiedConfig = false;
-								for (int i = 0; i < kitList.size(); i++) {
-									try {
+								if (!GuiKitMenu.playerMenus.contains(p.getName())) {
+									List<String> kitList = new ArrayList<String>();
+									if (this.getPlugin().getKitsConfig().contains("Kits")) kitList = this.getPlugin().getKitsConfig().getStringList("Kits");
+									KitStack[] kitStacks = new KitStack[kitList.size()];
+									boolean modifiedConfig = false;
+									for (int i = 0; i < kitList.size(); i++) {
 										String kitName = kitList.get(i);
 										try {
 											if (kitName.contains(" ")) {
@@ -58,23 +59,36 @@ public class KitCommand extends PlayerCommand {
 											}
 										} catch (Exception ex) {
 										}
-										ItemStack itemStack = new ItemStack(Material.DIAMOND_SWORD, 1);
-										if (this.getPlugin().getGuiItemsConfig().contains(kitName)) itemStack = new ItemStack(this.getPlugin().getGuiItemsConfig().getInt(kitName), 1);
-										else {
-											this.getPlugin().getGuiItemsConfig().set(kitName, itemStack.getType().getId());
+										try {
+											ItemStack itemStack = new ItemStack(Material.DIAMOND_SWORD, 1);
+											if (this.getPlugin().getGuiItemsConfig().contains(kitName)) {
+												String guiItemSplit[] = this.getPlugin().getGuiItemsConfig().getString(kitName).split(" ");
+												if (guiItemSplit.length > 1) {
+													try {
+														itemStack = new ItemStack(Integer.parseInt(guiItemSplit[0]), 1);
+														itemStack.setDurability(Short.parseShort(guiItemSplit[1]));
+													} catch (Exception ex) {
+														continue;
+													}
+												} else itemStack = new ItemStack(Integer.parseInt(guiItemSplit[0]), 1);
+											} else {
+												this.getPlugin().getGuiItemsConfig().set(kitName, itemStack.getType().getId());
+												modifiedConfig = true;
+											}
+											kitStacks[i] = new KitStack(kitName, itemStack);
+										} catch (Exception ex) {
+											this.getPlugin().getGuiItemsConfig().set(kitName, Material.DIAMOND_SWORD.getId());
 											modifiedConfig = true;
+											continue;
 										}
-										kitStacks[i] = new KitStack(kitName, itemStack);
-									} catch (Exception ex) {
-										continue;
 									}
+									if (modifiedConfig) {
+										this.getPlugin().saveGuiItemsConfig();
+										this.getPlugin().reloadGuiItemsConfig();
+									}
+									ChatColor menuColour = !kitList.isEmpty() ? ChatColor.DARK_BLUE : ChatColor.RED;
+									new GuiKitMenu(p, menuColour + "PvP Kits", kitStacks).openMenu();
 								}
-								if (modifiedConfig) {
-									this.getPlugin().saveGuiItemsConfig();
-									this.getPlugin().reloadGuiItemsConfig();
-								}
-								ChatColor menuColour = !kitList.isEmpty() ? ChatColor.DARK_BLUE : ChatColor.RED;
-								new GuiMenu(p, menuColour + "PvP Kits", kitStacks).openMenu();
 							}
 						} else if (args.length == 1) {
 							String kitName = args[0];
@@ -92,7 +106,7 @@ public class KitCommand extends PlayerCommand {
 								ex.printStackTrace();
 							}
 						} else {
-							p.sendMessage(r("&cUsage: &4/" + command.toLowerCase() + " [<kit>]"));
+							p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<kit>]")));
 						}
 					} else {
 						p.sendMessage(ChatColor.RED + "You cannot use this command in this world.");

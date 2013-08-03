@@ -1,8 +1,10 @@
 package net.bukkit.faris.kingkits.listeners.commands;
 
+import java.util.Arrays;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.Language;
 import net.bukkit.faris.kingkits.helpers.ConfigCommand;
 import net.bukkit.faris.kingkits.listeners.KingCommand;
 
@@ -11,8 +13,7 @@ import org.bukkit.command.CommandSender;
 
 public class KingKitsCommand extends KingCommand {
 
-	@SuppressWarnings("unchecked")
-	private List<ConfigCommand> configCommands = (List<ConfigCommand>) this.getList(cc("Op", "Op bypass"), cc("KitsCMD", "Enable kits command"), cc("CreateKitsCMD", "Enable create kits command"), cc("DeleteKits", "Enable delete kits command"), cc("ListKits", "List kits on join"), cc("KitListMode", "Kit list mode"), cc("KitListPermission", "Use permissions on join"), cc("ListKitsPermission", "Use permissions for kit list"), cc("RemoveItems", "Remove items on leave"), cc("DropItemsDeath", "Drop items on death"), cc("DropItems", "Drop items"), cc("ClearInvReload", "Clear inventories on reload"), cc("OneKitPerLife", "One kit per life"), cc("Score", "Enable score"), cc("ScorePerKill", "Score per kill"), cc("MaxScore", "Max score"), cc("RemovePotionEffects", "Remove potion effects on leave"), cc("Compass", "Set compass target to nearest player"), cc("Quick soup", "Quick soup"), cc("BlockChanging", "Disable block placing and breaking"), cc("DeathMessages", "Disable death messages"), cc("LockHunger", "Lock hunger level"), cc("DisableGM", "Disable gamemode while using a kit"), cc("Killstreaks", "Enable killstreaks"));
+	private List<ConfigCommand> configCommands = Arrays.asList(cc("Op", "Op bypass"), cc("KitsCMD", "Enable kits command"), cc("CreateKitsCMD", "Enable create kits command"), cc("DeleteKits", "Enable delete kits command"), cc("ListKits", "List kits on join"), cc("KitListMode", "Kit list mode"), cc("KitListPermission", "Use permissions on join"), cc("ListKitsPermission", "Use permissions for kit list"), cc("RemoveItems", "Remove items on leave"), cc("DropItemsDeath", "Drop items on death"), cc("DropItems", "Drop items"), cc("ClearInvReload", "Clear inventories on reload"), cc("OneKitPerLife", "One kit per life"), cc("UpdatesCheck", "Check for updates"), cc("AutomaticUpdates", "Automatically update"), cc("Score", "Enable score"), cc("ScorePerKill", "Score per kill"), cc("MaxScore", "Max score"), cc("RemovePotionEffects", "Remove potion effects on leave"), cc("Compass", "Set compass target to nearest player"), cc("QuickSoup", "Quick soup"), cc("KitRefill", "Requires kit to use refill"), cc("DisableBlockChanging", "Disable block placing and breaking"), cc("DisableDeathMsg", "Disable death messages"), cc("LockHunger", "Lock hunger level"), cc("DisableGM", "Disable gamemode while using a kit"), cc("Killstreaks", "Enable killstreaks"), cc("DisableItemBreaking", "Disable item breaking"), cc("KitMenu", "Kit menu on join"), cc("Scoreboards", "Scoreboards"));
 
 	public KingKitsCommand(KingKits pluginInstance) {
 		super(pluginInstance);
@@ -34,7 +35,7 @@ public class KingKitsCommand extends KingCommand {
 
 								sender.sendMessage(ChatColor.GOLD + "You reloaded KingKits configurations.");
 							} else {
-								sender.sendMessage(ChatColor.RED + "Usage: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " " + strCommand.toLowerCase());
+								sender.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " " + strCommand.toLowerCase())));
 							}
 						} else {
 							this.sendNoAccess(sender);
@@ -62,7 +63,7 @@ public class KingKitsCommand extends KingCommand {
 									sender.sendMessage(ChatColor.RED + "Usage: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " " + strCommand.toLowerCase() + " <property> <value>");
 								}
 							} else {
-								sender.sendMessage(ChatColor.RED + "Usage: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " " + strCommand.toLowerCase() + " <property> <value>");
+								sender.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " " + strCommand.toLowerCase() + " <property> <value>")));
 							}
 						} else {
 							this.sendNoAccess(sender);
@@ -127,11 +128,12 @@ public class KingKitsCommand extends KingCommand {
 				}
 				this.getPlugin().saveEconomyConfig();
 			}
+			if (!this.getPlugin().checkConfig()) return ChatColor.RED + "Could not update " + propertyKey + ".";
 			this.getPlugin().reloadAllConfigs();
 			this.getPlugin().loadConfiguration();
 			return ChatColor.GOLD + "Successfully updated " + propertyKey + " in the config.";
 		} catch (Exception ex) {
-			if (Math.random() < 0.5) ex.printStackTrace();
+			if (Math.random() < 0.25) ex.printStackTrace();
 			return ChatColor.RED + "Error: Couldn't update the config with the property.";
 		}
 	}

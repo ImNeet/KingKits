@@ -40,6 +40,12 @@ public class ConfigValues {
 	
 	public boolean killstreaks = false;
 	
+	public boolean disableItemBreaking = true;
+	
+	public boolean kitMenuOnJoin = false;
+	
+	public boolean scoreboards = true;
+	
 	// Scores
 	public boolean scores = true;
 	public String scoreFormat = "&6[&a<score>&6]";

@@ -1,6 +1,7 @@
 package net.bukkit.faris.kingkits.listeners.commands;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.Language;
 import net.bukkit.faris.kingkits.listeners.PlayerCommand;
 
 import org.bukkit.ChatColor;
@@ -31,33 +32,44 @@ public class RefillCommand extends PlayerCommand {
 								if (p.hasPermission(this.getPlugin().permissions.refillSoupSingle)) {
 									if (p.getInventory().getItemInHand() != null) {
 										if (p.getInventory().getItemInHand().getType() == Material.BOWL) {
-											ItemStack itemInHand = p.getInventory().getItemInHand();
-											int amount = itemInHand.getAmount();
-											if (amount <= 1) {
-												p.getInventory().setItemInHand(new ItemStack(Material.MUSHROOM_SOUP, 1));
-											} else {
-												itemInHand.setAmount(amount - 1);
-												p.getInventory().setItemInHand(itemInHand);
-												p.getInventory().addItem(new ItemStack(Material.MUSHROOM_SOUP, 1));
+											int invContentsSize = 0;
+											ItemStack[] itemContents = p.getInventory().getContents();
+											for (ItemStack itemContent : itemContents) {
+												if (itemContent != null) {
+													if (itemContent.getType() != Material.AIR) invContentsSize++;
+												}
 											}
-											if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useCostPerRefill) {
-												try {
-													net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
-													if (economy.hasAccount(p.getName())) {
-														double cost = this.getPlugin().configValues.vaultValues.costPerRefill;
-														if (economy.getBalance(p.getName()) >= cost) {
-															economy.withdrawPlayer(p.getName(), cost);
-															p.sendMessage(this.getPlugin().getEconomyMessage(cost));
+											if (invContentsSize < p.getInventory().getSize()) {
+												ItemStack itemInHand = p.getInventory().getItemInHand();
+												int amount = itemInHand.getAmount();
+												if (amount <= 1) {
+													p.getInventory().setItemInHand(new ItemStack(Material.MUSHROOM_SOUP, 1));
+												} else {
+													itemInHand.setAmount(amount - 1);
+													p.getInventory().setItemInHand(itemInHand);
+													p.getInventory().addItem(new ItemStack(Material.MUSHROOM_SOUP, 1));
+												}
+												if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useCostPerRefill) {
+													try {
+														net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
+														if (economy.hasAccount(p.getName())) {
+															double cost = this.getPlugin().configValues.vaultValues.costPerRefill;
+															if (economy.getBalance(p.getName()) >= cost) {
+																economy.withdrawPlayer(p.getName(), cost);
+																if (cost != 0) p.sendMessage(this.getPlugin().getEconomyMessage(cost));
+															} else {
+																p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill your bowl.");
+																return true;
+															}
 														} else {
 															p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill your bowl.");
 															return true;
 														}
-													} else {
-														p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill your bowl.");
-														return true;
+													} catch (Exception ex) {
 													}
-												} catch (Exception ex) {
 												}
+											} else {
+												p.sendMessage(ChatColor.RED + "You have a full inventory.");
 											}
 										} else {
 											p.sendMessage(ChatColor.RED + "You must have a bowl in your hand.");
@@ -71,53 +83,94 @@ public class RefillCommand extends PlayerCommand {
 							} else if (args.length == 1) {
 								if (args[0].equalsIgnoreCase("all")) {
 									if (p.hasPermission(this.getPlugin().permissions.refillSoupAll)) {
-										int amountOfBowls = 0;
-										ItemStack[] itemContents = p.getInventory().getContents();
-										for (int i = 0; i < itemContents.length; i++) {
-											try {
-												ItemStack item = itemContents[i];
-												if (item != null) {
-													if (item.getType() == Material.BOWL) {
-														itemContents[i] = new ItemStack(Material.MUSHROOM_SOUP, item.getAmount());
-														amountOfBowls += item.getAmount();
+										if (p.getInventory().getItemInHand() != null) {
+											if (p.getInventory().getItemInHand().getType() == Material.BOWL) {
+												int invContentsSize = 0;
+												ItemStack[] itemContentz = p.getInventory().getContents();
+												for (ItemStack itemContent : itemContentz) {
+													if (itemContent != null) {
+														if (itemContent.getType() != Material.AIR) invContentsSize++;
 													}
 												}
-											} catch (Exception ex) {
-												continue;
-											}
-										}
-										if (amountOfBowls == 0) {
-											p.sendMessage(ChatColor.RED + "You have no bowls!");
-											return true;
-										}
-										if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useCostPerRefill) {
-											try {
-												net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
-												if (economy.hasAccount(p.getName())) {
-													double cost = this.getPlugin().configValues.vaultValues.costPerRefill * amountOfBowls;
-													if (economy.getBalance(p.getName()) >= cost) {
-														economy.withdrawPlayer(p.getName(), cost);
-														p.sendMessage(this.getPlugin().getEconomyMessage(cost));
-													} else {
-														p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill all your bowls.");
-														return true;
+												if (invContentsSize < p.getInventory().getSize()) {
+													int bowlAmount = p.getInventory().getItemInHand().getAmount();
+													int invSize = 0;
+													int bowlsGiven = 0;
+													ItemStack[] itemContents = p.getInventory().getContents();
+													int invMaxSize = p.getInventory().getSize();
+													for (int i = 0; i < itemContents.length; i++) {
+														if (itemContents[i] != null) {
+															if (itemContents[i].getType() != Material.AIR) invSize++;
+														}
 													}
+													for (int i = 0; i < bowlAmount; i++) {
+														if (invSize < invMaxSize) {
+															invSize++;
+															bowlsGiven++;
+														}
+													}
+													if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useCostPerRefill) {
+														try {
+															net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
+															if (economy.hasAccount(p.getName())) {
+																double cost = this.getPlugin().configValues.vaultValues.costPerRefill * bowlsGiven;
+																if (economy.getBalance(p.getName()) >= cost) {
+																	economy.withdrawPlayer(p.getName(), cost);
+																	if (cost != 0) p.sendMessage(this.getPlugin().getEconomyMessage(cost));
+																} else {
+																	p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill all your bowls.");
+																	return true;
+																}
+															} else {
+																p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill all your bowls.");
+																return true;
+															}
+														} catch (Exception ex) {
+														}
+													}
+													for (int i = 0; i < bowlsGiven; i++) {
+														p.getInventory().addItem(new ItemStack(Material.MUSHROOM_SOUP, 1));
+													}
+													if (p.getInventory().getItemInHand().getAmount() - bowlsGiven > 0) p.getInventory().setItemInHand(new ItemStack(Material.BOWL, p.getInventory().getItemInHand().getAmount() - bowlsGiven));
+													else p.getInventory().setItemInHand(new ItemStack(Material.AIR));
 												} else {
-													p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill all your bowls.");
-													return true;
+													if (p.getInventory().getItemInHand().getAmount() == 1) {
+														if (this.getPlugin().configValues.vaultValues.useEconomy && this.getPlugin().configValues.vaultValues.useCostPerRefill) {
+															try {
+																net.milkbowl.vault.economy.Economy economy = (net.milkbowl.vault.economy.Economy) this.getPlugin().vault.getEconomy();
+																if (economy.hasAccount(p.getName())) {
+																	double cost = this.getPlugin().configValues.vaultValues.costPerRefill;
+																	if (economy.getBalance(p.getName()) >= cost) {
+																		economy.withdrawPlayer(p.getName(), cost);
+																		if (cost != 0) p.sendMessage(this.getPlugin().getEconomyMessage(cost));
+																	} else {
+																		p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill your bowl.");
+																		return true;
+																	}
+																} else {
+																	p.sendMessage(ChatColor.GREEN + "You do not have enough money to refill your bowl.");
+																	return true;
+																}
+															} catch (Exception ex) {
+															}
+															p.getInventory().setItemInHand(new ItemStack(Material.MUSHROOM_SOUP));
+														}
+													}
 												}
-											} catch (Exception ex) {
+											} else {
+												p.sendMessage(ChatColor.RED + "You must have a bowl in your hand.");
 											}
+										} else {
+											p.sendMessage(ChatColor.RED + "You must have a bowl in your hand.");
 										}
-										p.getInventory().setContents(itemContents);
 									} else {
 										this.sendNoAccess(p);
 									}
 								} else {
-									p.sendMessage(ChatColor.RED + "Usage: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " [<all>]");
+									p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<all>]")));
 								}
 							} else {
-								p.sendMessage(ChatColor.RED + "Usage: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " [<all>]");
+								p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<all>]")));
 							}
 						} else {
 							p.sendMessage(ChatColor.RED + "You cannot use this command in this world.");

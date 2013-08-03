@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.Language;
 import net.bukkit.faris.kingkits.listeners.PlayerCommand;
 
 import org.bukkit.ChatColor;
@@ -27,16 +28,31 @@ public class CreateKitCommand extends PlayerCommand {
 				if (this.getPlugin().cmdValues.createKits) {
 					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(p.getWorld().getName())) {
 						if (args.length == 0) {
-							p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<kit>|<kit> <guiitem>]"));
+							p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<kit>|<kit> <guiitem>]")));
 							p.sendMessage(this.r("&cDescription: &4Create your own PvP kit with every item in your inventory."));
-						} else if (args.length == 1 || args.length == 2) {
+						} else if (args.length > 0 && args.length < 3) {
 							String kitName = args[0];
 							boolean containsKit = this.getPlugin().getKitsConfig().contains(kitName);
 							if (!this.containsIllegalChars(kitName)) {
 								if (args.length == 2) {
-									if (!this.isNumeric(args[1])) {
-										p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<kit>|<kit> <guiitem>]"));
-										return true;
+									if (args[1].contains(":")) {
+										String[] guiSplit = args[1].split(":");
+										if (guiSplit.length == 2) {
+											if (!this.isNumeric(guiSplit[0]) || !this.isNumeric(guiSplit[1])) {
+												p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<kit>|<kit> <guiitem>]"));
+												return true;
+											}
+										} else {
+											if (!this.isNumeric(args[1])) {
+												p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<kit>|<kit> <guiitem>]"));
+												return true;
+											}
+										}
+									} else {
+										if (!this.isNumeric(args[1])) {
+											p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<kit>|<kit> <guiitem>]"));
+											return true;
+										}
 									}
 								}
 
@@ -163,17 +179,24 @@ public class CreateKitCommand extends PlayerCommand {
 
 									boolean addGuiMenuItem = true;
 									if (args.length == 2) {
-										if (this.isNumeric(args[1])) {
-											ItemStack guiItem = null;
-											try {
-												guiItem = new ItemStack(Integer.parseInt(args[1]));
-											} catch (Exception ex) {
+										ItemStack guiItem = null;
+										try {
+											guiItem = new ItemStack(Integer.parseInt(args[1]));
+										} catch (Exception ex) {
+										}
+										try {
+											if (args[1].contains(":")) {
+												String[] guiSplit = args[1].split(":");
+												guiItem = new ItemStack(Integer.parseInt(guiSplit[0]));
+												guiItem.setDurability(Short.parseShort(guiSplit[1]));
 											}
-											if (guiItem != null) {
-												if (guiItem.getType() != Material.AIR) {
-													addGuiMenuItem = false;
-													this.getPlugin().getGuiItemsConfig().set(kitName, guiItem.getType().getId());
-												}
+										} catch (Exception ex) {
+										}
+										if (guiItem != null) {
+											if (guiItem.getType() != Material.AIR) {
+												addGuiMenuItem = false;
+												if (guiItem.getDurability() != 0) this.getPlugin().getGuiItemsConfig().set(kitName, guiItem.getType().getId() + " " + guiItem.getDurability());
+												else this.getPlugin().getGuiItemsConfig().set(kitName, guiItem.getType().getId());
 											}
 										}
 									}

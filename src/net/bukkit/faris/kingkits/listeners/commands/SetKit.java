@@ -67,7 +67,7 @@ public class SetKit {
 								if (economy.hasAccount(p.getName())) {
 									if (economy.getBalance(p.getName()) >= kitCost) {
 										economy.withdrawPlayer(p.getName(), kitCost);
-										p.sendMessage(ChatColor.GREEN + plugin.getEconomyMessage(kitCost));
+										if (kitCost != 0) p.sendMessage(ChatColor.GREEN + plugin.getEconomyMessage(kitCost));
 									} else {
 										p.sendMessage(ChatColor.GREEN + "You do not have enough money to change kits.");
 										return;
@@ -188,7 +188,7 @@ public class SetKit {
 								} catch (Exception ex) {
 								}
 							}
-							if (itemToGive.getType() == Material.DIAMOND_HELMET || itemToGive.getType() == Material.IRON_HELMET || itemToGive.getType() == Material.CHAINMAIL_HELMET || itemToGive.getType() == Material.GOLD_HELMET || itemToGive.getType() == Material.LEATHER_HELMET) {
+							if (itemToGive.getType() == Material.DIAMOND_HELMET || itemToGive.getType() == Material.IRON_HELMET || itemToGive.getType() == Material.CHAINMAIL_HELMET || itemToGive.getType() == Material.GOLD_HELMET || itemToGive.getType() == Material.LEATHER_HELMET || itemToGive.getType() == Material.SKULL_ITEM) {
 								p.getInventory().setHelmet(itemToGive);
 							} else if (itemToGive.getType() == Material.DIAMOND_CHESTPLATE || itemToGive.getType() == Material.IRON_CHESTPLATE || itemToGive.getType() == Material.CHAINMAIL_CHESTPLATE || itemToGive.getType() == Material.GOLD_CHESTPLATE || itemToGive.getType() == Material.LEATHER_CHESTPLATE) {
 								p.getInventory().setChestplate(itemToGive);
@@ -232,6 +232,7 @@ public class SetKit {
 										else amplifier = 0;
 									}
 								} else {
+									strAmplifier = "0";
 									amplifier = 0;
 								}
 								if (split.length > 2) {

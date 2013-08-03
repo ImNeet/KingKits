@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.Language;
 import net.bukkit.faris.kingkits.hooks.PvPKits;
 import net.bukkit.faris.kingkits.listeners.PlayerCommand;
 
@@ -23,7 +24,7 @@ public class DeleteKitCommand extends PlayerCommand {
 				if (this.getPlugin().cmdValues.deleteKits) {
 					if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(p.getWorld().getName())) {
 						if (args.length == 0) {
-							p.sendMessage(r("&cUsage: &4/" + command.toLowerCase() + " <kit>"));
+							p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " <kit>")));
 							p.sendMessage(r("&cDescription: &Delete a PvP Kit."));
 						} else if (args.length == 1) {
 							String kitName = args[0];
@@ -101,7 +102,7 @@ public class DeleteKitCommand extends PlayerCommand {
 								p.sendMessage(ChatColor.DARK_RED + "This kit doesn't exist.");
 							}
 						} else {
-							p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " <kit>"));
+							p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " <kit>")));
 						}
 					} else {
 						p.sendMessage(ChatColor.RED + "You cannot use this command in this world.");

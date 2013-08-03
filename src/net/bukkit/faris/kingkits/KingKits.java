@@ -22,6 +22,7 @@ import net.bukkit.faris.kingkits.listeners.event.PlayerListener;
 import net.bukkit.faris.kingkits.values.CommandValues;
 import net.bukkit.faris.kingkits.values.ConfigValues;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -32,6 +33,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 
 @SuppressWarnings("unused")
 public class KingKits extends JavaPlugin {
@@ -133,6 +137,45 @@ public class KingKits extends JavaPlugin {
 				}
 			}
 		}
+
+		if (this.configValues.scoreboards) {
+			for (Player p : this.getServer().getOnlinePlayers()) {
+				try {
+					if (this.configValues.pvpWorlds.contains("All") || this.configValues.pvpWorlds.contains(p.getLocation().getWorld().getName())) {
+						Scoreboard currentScoreboard = p.getScoreboard();
+						if (currentScoreboard == null) currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
+						Objective sObj = currentScoreboard.getObjective(DisplaySlot.SIDEBAR);
+						if (sObj == null) {
+							sObj = currentScoreboard.registerNewObjective("test", "dummy");
+							sObj.setDisplayName(ChatColor.RED + "KingKits");
+							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+						} else {
+							if (this.configValues.scores) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(0);
+							if (this.configValues.killstreaks) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(0);
+						}
+						if (this.configValues.scores) {
+							int playerScore = 0;
+							if (this.playerScores.containsKey(p.getName())) {
+								long currentScore = (long) this.playerScores.get(p.getName());
+								playerScore = (currentScore <= Integer.MAX_VALUE) ? (int) this.playerScores.get(p.getName()) : Integer.MAX_VALUE;
+							}
+							sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(playerScore);
+						}
+						if (this.configValues.killstreaks) {
+							int playerKillstreak = 0;
+							if (this.playerKillstreaks.containsKey(p.getName())) {
+								long currentKillstreak = this.playerKillstreaks.get(p.getName());
+								playerKillstreak = (currentKillstreak <= Integer.MAX_VALUE) ? Integer.parseInt(String.valueOf(this.playerKillstreaks.get(p.getName()))) : Integer.MAX_VALUE;
+							}
+							sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(playerKillstreak);
+						}
+						p.setScoreboard(currentScoreboard);
+					}
+				} catch (Exception ex) {
+					continue;
+				}
+			}
+		}
 	}
 
 	public void onDisable() {
@@ -210,6 +253,9 @@ public class KingKits extends JavaPlugin {
 			this.getConfig().addDefault("Custom message", "&6You have chosen the kit &c<kit>&6.");
 			this.getConfig().addDefault("Disable gamemode while using a kit", false);
 			this.getConfig().addDefault("Enable killstreaks", false);
+			this.getConfig().addDefault("Disable item breaking", true);
+			this.getConfig().addDefault("Kit menu on join", false);
+			this.getConfig().addDefault("Scoreboards", true);
 			this.getConfig().options().copyDefaults(true);
 			this.getConfig().options().copyHeader(true);
 			this.saveConfig();
@@ -243,6 +289,9 @@ public class KingKits extends JavaPlugin {
 			this.configValues.commandToRun = this.getConfig().getString("Command to run when changing kits");
 			this.configValues.disableGamemode = this.getConfig().getBoolean("Disable gamemode while using a kit");
 			this.configValues.killstreaks = this.getConfig().getBoolean("Enable killstreaks");
+			this.configValues.disableItemBreaking = this.getConfig().getBoolean("Disable item breaking");
+			this.configValues.kitMenuOnJoin = this.getConfig().getBoolean("Kit menu on join");
+			this.configValues.scoreboards = this.getConfig().getBoolean("Scoreboards");
 
 			this.configValues.scores = this.getConfig().getBoolean("Enable score");
 			this.configValues.scoreIncrement = this.getConfig().getInt("Score per kill");
@@ -469,6 +518,16 @@ public class KingKits extends JavaPlugin {
 		this.saveKillstreaksConfig();
 	}
 
+	public boolean checkConfig() {
+		String scoreChatPrefix = this.getConfig().getString("Score chat prefix");
+		if (!scoreChatPrefix.contains("<score>")) {
+			this.getConfig().set("Score chat prefix", "&6[&a<score>&6]");
+			this.saveConfig();
+			return false;
+		}
+		return true;
+	}
+
 	private void setupPermissions(boolean unregisterFirst) {
 		if (unregisterFirst) {
 			try {
@@ -547,51 +606,8 @@ public class KingKits extends JavaPlugin {
 	}
 
 	public String replaceAllColours(String val) {
-		String message = val;
-		message = message.replaceAll("&1", ChatColor.DARK_BLUE + "");
-		message = message.replaceAll("&2", ChatColor.DARK_GREEN + "");
-		message = message.replaceAll("&3", ChatColor.DARK_AQUA + "");
-		message = message.replaceAll("&4", ChatColor.DARK_RED + "");
-		message = message.replaceAll("&5", ChatColor.DARK_PURPLE + "");
-		message = message.replaceAll("&6", ChatColor.GOLD + "");
-		message = message.replaceAll("&7", ChatColor.GRAY + "");
-		message = message.replaceAll("&8", ChatColor.DARK_GRAY + "");
-		message = message.replaceAll("&9", ChatColor.BLUE + "");
-		message = message.replaceAll("&0", ChatColor.BLACK + "");
-		message = message.replaceAll("&a", ChatColor.GREEN + "");
-		message = message.replaceAll("&b", ChatColor.AQUA + "");
-		message = message.replaceAll("&c", ChatColor.RED + "");
-		message = message.replaceAll("&d", ChatColor.LIGHT_PURPLE + "");
-		message = message.replaceAll("&e", ChatColor.YELLOW + "");
-		message = message.replaceAll("&f", ChatColor.WHITE + "");
-		message = message.replaceAll("&k", ChatColor.MAGIC + "");
-		message = message.replaceAll("&l", ChatColor.BOLD + "");
-		message = message.replaceAll("&m", ChatColor.STRIKETHROUGH + "");
-		message = message.replaceAll("&n", ChatColor.UNDERLINE + "");
-		message = message.replaceAll("&o", ChatColor.ITALIC + "");
-		message = message.replaceAll("&r", ChatColor.RESET + "");
-		message = message.replaceAll("§1", ChatColor.DARK_BLUE + "");
-		message = message.replaceAll("§2", ChatColor.DARK_GREEN + "");
-		message = message.replaceAll("§3", ChatColor.DARK_AQUA + "");
-		message = message.replaceAll("§4", ChatColor.DARK_RED + "");
-		message = message.replaceAll("§5", ChatColor.DARK_PURPLE + "");
-		message = message.replaceAll("§6", ChatColor.GOLD + "");
-		message = message.replaceAll("§7", ChatColor.GRAY + "");
-		message = message.replaceAll("§8", ChatColor.DARK_GRAY + "");
-		message = message.replaceAll("§9", ChatColor.BLUE + "");
-		message = message.replaceAll("§0", ChatColor.BLACK + "");
-		message = message.replaceAll("§a", ChatColor.GREEN + "");
-		message = message.replaceAll("§b", ChatColor.AQUA + "");
-		message = message.replaceAll("§c", ChatColor.RED + "");
-		message = message.replaceAll("§d", ChatColor.LIGHT_PURPLE + "");
-		message = message.replaceAll("§e", ChatColor.YELLOW + "");
-		message = message.replaceAll("§f", ChatColor.WHITE + "");
-		message = message.replaceAll("§k", ChatColor.MAGIC + "");
-		message = message.replaceAll("§l", ChatColor.BOLD + "");
-		message = message.replaceAll("§m", ChatColor.STRIKETHROUGH + "");
-		message = message.replaceAll("§n", ChatColor.UNDERLINE + "");
-		message = message.replaceAll("§o", ChatColor.ITALIC + "");
-		message = message.replaceAll("§r", ChatColor.RESET + "");
+		String message = ChatColor.translateAlternateColorCodes('&', val);
+		message = ChatColor.translateAlternateColorCodes('§', message);
 		return message;
 	}
 

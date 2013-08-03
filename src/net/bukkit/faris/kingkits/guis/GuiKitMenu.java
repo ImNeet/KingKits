@@ -1,5 +1,8 @@
 package net.bukkit.faris.kingkits.guis;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.bukkit.faris.kingkits.KingKits;
 import net.bukkit.faris.kingkits.helpers.KitStack;
 import net.bukkit.faris.kingkits.hooks.Plugin;
@@ -10,14 +13,18 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType.SlotType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class GuiMenu implements Listener {
+public class GuiKitMenu implements Listener {
+
+	public static List<String> playerMenus = new ArrayList<String>();
 
 	private KingKits thePlugin = null;
 	private Player thePlayer = null;
@@ -31,16 +38,19 @@ public class GuiMenu implements Listener {
 	 * @param title - The title of the menu
 	 * @param kitStacks - The kits in the menu
 	 */
-	public GuiMenu(Player player, String title, KitStack[] kitStacks) {
+	public GuiKitMenu(Player player, String title, KitStack[] kitStacks) {
 		this.thePlugin = Plugin.getPlugin();
 		this.thePlayer = player;
 		this.guiTitle = title;
 		this.guiKitStacks = kitStacks;
 
 		this.clickedItem = false;
+		this.closedInventory = false;
 
 		if (Plugin.isInitialised()) Bukkit.getPluginManager().registerEvents(this, Plugin.getPlugin());
 		else Bukkit.getPluginManager().registerEvents(this, Bukkit.getPluginManager().getPlugin("KingKits"));
+
+		playerMenus.add(player.getName());
 	}
 
 	/** Opens the menu for the player **/
@@ -78,10 +88,12 @@ public class GuiMenu implements Listener {
 	/** Closes the menu for the player and unregisters the event **/
 	public void closeMenu(boolean unregisterEvents) {
 		try {
-			this.thePlayer.closeInventory();
 			if (unregisterEvents) {
 				InventoryClickEvent.getHandlerList().unregister(this);
+				InventoryCloseEvent.getHandlerList().unregister(this);
 			}
+			this.thePlayer.closeInventory();
+			playerMenus.remove(this.thePlayer.getName());
 		} catch (Exception ex) {
 		}
 	}
@@ -92,7 +104,7 @@ public class GuiMenu implements Listener {
 	}
 
 	/** Sets the player that is opening the menu **/
-	public GuiMenu setPlayer(Player player) {
+	public GuiKitMenu setPlayer(Player player) {
 		this.thePlayer = player;
 		return this;
 	}
@@ -103,7 +115,7 @@ public class GuiMenu implements Listener {
 	}
 
 	/** Sets the title of the menu **/
-	public GuiMenu setTitle(String title) {
+	public GuiKitMenu setTitle(String title) {
 		this.guiTitle = title;
 		return this;
 	}
@@ -114,13 +126,15 @@ public class GuiMenu implements Listener {
 	}
 
 	/** Sets the kit item stacks **/
-	public GuiMenu setKitStacks(KitStack[] kitStacks) {
+	public GuiKitMenu setKitStacks(KitStack[] kitStacks) {
 		this.guiKitStacks = kitStacks;
 		return this;
 	}
 
 	/** Returns if the player has clicked in the inventory **/
 	private boolean clickedItem = false;
+	/** Returns if the player has closed the inventory **/
+	private boolean closedInventory = false;
 
 	/** Handles when a player clicks an item **/
 	@EventHandler
@@ -137,6 +151,7 @@ public class GuiMenu implements Listener {
 									if (this.guiKitStacks.length >= event.getSlot()) SetKit.setKitPlayerKit(this.thePlugin, (Player) event.getWhoClicked(), this.guiKitStacks[event.getSlot()].getKitName());
 								}
 								this.clickedItem = true;
+								this.closedInventory = true;
 								this.closeMenu(true);
 							}
 						}
@@ -148,9 +163,25 @@ public class GuiMenu implements Listener {
 				if (event.getInventory().getTitle().equals(this.guiInventory.getTitle())) {
 					event.setCurrentItem(null);
 					event.setCancelled(true);
+					this.closedInventory = true;
 					this.closeMenu(true);
 				}
 			}
+		}
+	}
+
+	/** Handles when a player exits the menu **/
+	@EventHandler(priority = EventPriority.HIGHEST)
+	protected void onPlayerCloseInventory(InventoryCloseEvent event) {
+		try {
+			if (!this.closedInventory) {
+				if (this.guiInventory != null && event.getInventory() != null) {
+					if (event.getPlayer() instanceof Player) {
+						if (event.getInventory().getTitle().equals(this.guiInventory.getTitle())) this.closeMenu(true);
+					}
+				}
+			}
+		} catch (Exception ex) {
 		}
 	}
 

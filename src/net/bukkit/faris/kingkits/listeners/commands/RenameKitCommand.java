@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.bukkit.faris.kingkits.KingKits;
+import net.bukkit.faris.kingkits.Language;
 import net.bukkit.faris.kingkits.listeners.PlayerCommand;
 
 import org.bukkit.ChatColor;
@@ -23,7 +24,7 @@ public class RenameKitCommand extends PlayerCommand {
 					if (this.getPlugin().cmdValues.renameKits) {
 						if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(p.getWorld().getName())) {
 							if (args.length == 0) {
-								p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<name> <newname>]"));
+								p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<name> <newname>]")));
 								p.sendMessage(this.r("&cDescription: &4Rename a PvP kit."));
 							} else if (args.length == 2) {
 								String strKit = args[0];
@@ -105,7 +106,7 @@ public class RenameKitCommand extends PlayerCommand {
 									p.sendMessage(ChatColor.RED + strKit + " doesn't exist.");
 								}
 							} else {
-								p.sendMessage(this.r("&cUsage: &4/" + command.toLowerCase() + " [<name> <newname>]"));
+								p.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " [<name> <newname>]")));
 							}
 						} else {
 							p.sendMessage(ChatColor.RED + "You cannot use this command in this world.");
