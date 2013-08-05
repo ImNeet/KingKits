@@ -958,17 +958,11 @@ public class PlayerListener implements Listener {
 	/** Shows the KingKits Scoreboard to a player **/
 	public void showScoreboard(Player p) {
 		if (this.getPlugin().configValues.scoreboards) {
-			Scoreboard currentScoreboard = p.getScoreboard();
-			if (currentScoreboard == null) currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
-			Objective sObj = currentScoreboard.getObjective(DisplaySlot.SIDEBAR);
-			if (sObj == null) {
-				sObj = currentScoreboard.registerNewObjective("test", "dummy");
-				sObj.setDisplayName(ChatColor.RED + "KingKits");
-				sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
-			} else {
-				if (this.getPlugin().configValues.scores) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(0);
-				if (this.getPlugin().configValues.killstreaks) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(0);
-			}
+			Scoreboard currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
+			Objective sObj = currentScoreboard.registerNewObjective("KingKits", "dummy");
+			sObj.setDisplayName(ChatColor.RED + "KingKits");
+			sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+			
 			if (this.getPlugin().configValues.scores) {
 				int playerScore = 0;
 				if (this.getPlugin().playerScores.containsKey(p.getName())) {

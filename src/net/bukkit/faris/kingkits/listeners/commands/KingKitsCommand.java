@@ -10,6 +10,7 @@ import net.bukkit.faris.kingkits.listeners.KingCommand;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 public class KingKitsCommand extends KingCommand {
 
@@ -30,10 +31,19 @@ public class KingKitsCommand extends KingCommand {
 					if (strCommand.equalsIgnoreCase("reload")) {
 						if (sender.isOp()) {
 							if (args.length == 1) {
+								boolean usingScoreboards = this.getPlugin().configValues.scoreboards;
 								this.getPlugin().reloadAllConfigs();
 								this.getPlugin().loadConfiguration();
 
 								sender.sendMessage(ChatColor.GOLD + "You reloaded KingKits configurations.");
+								if (usingScoreboards && !this.getPlugin().configValues.scoreboards) {
+									try {
+										for (Player onlineP : sender.getServer().getOnlinePlayers()) {
+											onlineP.setScoreboard(null);
+										}
+									} catch (Exception ex) {
+									}
+								}
 							} else {
 								sender.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " " + strCommand.toLowerCase())));
 							}
@@ -46,7 +56,16 @@ public class KingKitsCommand extends KingCommand {
 								String configKey = args[1];
 								String configValue = args[2];
 								if (this.containsCommand(this.configCommands, configKey)) {
+									boolean usingScoreboards = this.getPlugin().configValues.scoreboards;
 									sender.sendMessage(this.updateConfig("Config", configKey, configValue));
+									if (usingScoreboards && !this.getPlugin().configValues.scoreboards) {
+										try {
+											for (Player onlineP : sender.getServer().getOnlinePlayers()) {
+												onlineP.setScoreboard(null);
+											}
+										} catch (Exception ex) {
+										}
+									}
 								} else {
 									sender.sendMessage(ChatColor.RED + "Invalid config property: " + ChatColor.DARK_RED + configKey);
 									sender.sendMessage(ChatColor.RED + "To list all the config properties you can edit type: " + ChatColor.DARK_RED + "/" + command.toLowerCase() + " " + strCommand.toLowerCase() + " list");
@@ -131,6 +150,7 @@ public class KingKitsCommand extends KingCommand {
 			if (!this.getPlugin().checkConfig()) return ChatColor.RED + "Could not update " + propertyKey + ".";
 			this.getPlugin().reloadAllConfigs();
 			this.getPlugin().loadConfiguration();
+			
 			return ChatColor.GOLD + "Successfully updated " + propertyKey + " in the config.";
 		} catch (Exception ex) {
 			if (Math.random() < 0.25) ex.printStackTrace();

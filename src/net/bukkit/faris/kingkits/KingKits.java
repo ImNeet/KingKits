@@ -139,20 +139,15 @@ public class KingKits extends JavaPlugin {
 		}
 
 		if (this.configValues.scoreboards) {
-			for (Player p : this.getServer().getOnlinePlayers()) {
+			for (int pos = 0; pos < this.getServer().getOnlinePlayers().length; pos++) {
+				Player p = this.getServer().getOnlinePlayers()[pos];
 				try {
 					if (this.configValues.pvpWorlds.contains("All") || this.configValues.pvpWorlds.contains(p.getLocation().getWorld().getName())) {
-						Scoreboard currentScoreboard = p.getScoreboard();
-						if (currentScoreboard == null) currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
-						Objective sObj = currentScoreboard.getObjective(DisplaySlot.SIDEBAR);
-						if (sObj == null) {
-							sObj = currentScoreboard.registerNewObjective("test", "dummy");
-							sObj.setDisplayName(ChatColor.RED + "KingKits");
-							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
-						} else {
-							if (this.configValues.scores) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Score:")).setScore(0);
-							if (this.configValues.killstreaks) sObj.getScore(Bukkit.getOfflinePlayer(ChatColor.GREEN + "Killstreak:")).setScore(0);
-						}
+						Scoreboard currentScoreboard = p.getServer().getScoreboardManager().getNewScoreboard();
+						Objective sObj = currentScoreboard.registerNewObjective("KingKits", "dummy");
+						sObj.setDisplayName(ChatColor.RED + "KingKits");
+						sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+
 						if (this.configValues.scores) {
 							int playerScore = 0;
 							if (this.playerScores.containsKey(p.getName())) {
@@ -198,6 +193,14 @@ public class KingKits extends JavaPlugin {
 						target.getInventory().setArmorContents(null);
 					}
 				}
+			}
+		}
+
+		// Remove scoreboards
+		if (this.configValues.scoreboards) {
+			for (int pos = 0; pos < this.getServer().getOnlinePlayers().length; pos++) {
+				Player target = this.getServer().getOnlinePlayers()[pos];
+				if (target != null) target.setScoreboard(null);
 			}
 		}
 
