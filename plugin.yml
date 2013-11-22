@@ -1,9 +1,9 @@
 name: KingKits
-main: net.bukkit.faris.kingkits.KingKits
-version: 2.0.1
+main: me.faris.kingkits.KingKits
+version: 2.0.3
 description: Have battles with enemies using custom made kits!
 author: KingFaris10
-softdepend: [Vault]
+softdepends: Vault
 commands:
     kingkits:
       description: KingKits plugin command.
