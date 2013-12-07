@@ -94,22 +94,14 @@ public class KingKits extends JavaPlugin {
 		if (this.cmdKitR == null) this.cmdKitR = new RenameKitCommand(this);
 
 		// Register commands
-		if (this.getCommand("kingkits") != null) {
-			this.getCommand("kingkits").setExecutor(this.cmdKingKits);
-			this.getCommand("kingkits").setAliases(Arrays.asList("kk"));
-		} else System.out.println("Error: Command is null; Couldn't register command: /kingkits");
-		if (this.getCommand("pvpkit") != null) this.getCommand("pvpkit").setExecutor(this.cmdKitL);
-		else System.out.println("Error: Command is null; Couldn't register command: /pvpkit");
-		if (this.getCommand("createkit") != null) this.getCommand("createkit").setExecutor(this.cmdKitC);
-		else System.out.println("Error: Command is null; Couldn't register command: /createkit");
-		if (this.getCommand("deletekit") != null) this.getCommand("deletekit").setExecutor(this.cmdKitD);
-		else System.out.println("Error: Command is null; Couldn't register command: /deletekit");
-		if (this.getCommand("refill") != null) {
-			this.getCommand("refill").setExecutor(this.cmdRefill);
-			this.getCommand("refill").setAliases(Arrays.asList("soup"));
-		} else System.out.println("Error: Command is null; Couldn't register command: /refill");
-		if (this.getCommand("renamekit") != null) this.getCommand("renamekit").setExecutor(this.cmdKitR);
-		else System.out.println("Error: Command is null; Couldn't register command: /renamekit");
+		this.getCommand("kingkits").setExecutor(this.cmdKingKits);
+		this.getCommand("kingkits").setAliases(Arrays.asList("kk"));
+		this.getCommand("pvpkit").setExecutor(this.cmdKitL);
+		this.getCommand("createkit").setExecutor(this.cmdKitC);
+		this.getCommand("deletekit").setExecutor(this.cmdKitD);
+		this.getCommand("refill").setExecutor(this.cmdRefill);
+		this.getCommand("refill").setAliases(Arrays.asList("soup"));
+		this.getCommand("renamekit").setExecutor(this.cmdKitR);
 
 		// Register permissions
 		for (Permission registeredPerm : this.permissions.permissionsList)

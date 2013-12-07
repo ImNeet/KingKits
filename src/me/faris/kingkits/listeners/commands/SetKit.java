@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.faris.kingkits.KingKits;
+import me.faris.kingkits.listeners.event.custom.PlayerKitEvent;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -79,6 +80,7 @@ public class SetKit {
 							} catch (Exception ex) {
 							}
 						}
+						String oldKit = plugin.playerKits.containsKey(p.getName()) ? plugin.playerKits.get(p.getName()) : null;
 						p.getInventory().clear();
 						p.getInventory().setArmorContents(null);
 						p.setGameMode(GameMode.SURVIVAL);
@@ -278,6 +280,7 @@ public class SetKit {
 						plugin.usingKits.put(p.getName(), kitName);
 						plugin.hasKit.put(p.getName(), kitName);
 						if (plugin.configValues.customMessages != "" && plugin.configValues.customMessages != "''") p.sendMessage(r(plugin.configValues.customMessages).replaceAll("<kit>", kitName));
+						p.getServer().getPluginManager().callEvent(new PlayerKitEvent(p, kitName, oldKit));
 					} else {
 						p.sendMessage(r("&cYou do not have permission to use the kit &4" + kitName + "&c."));
 					}

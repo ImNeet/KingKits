@@ -5,7 +5,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 public class Vault {
 	private KingKits plugin = null;
 	private boolean printed = false;
-	
+
 	public Vault(KingKits pluginInstance) {
 		this.plugin = pluginInstance;
 		this.printed = false;

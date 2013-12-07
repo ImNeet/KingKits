@@ -11,6 +11,8 @@ import me.faris.kingkits.listeners.KingCommand;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Scoreboard;
 
 public class KingKitsCommand extends KingCommand {
 
@@ -83,6 +85,28 @@ public class KingKitsCommand extends KingCommand {
 								}
 							} else {
 								sender.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " " + strCommand.toLowerCase() + " <property> <value>")));
+							}
+						} else {
+							this.sendNoAccess(sender);
+						}
+					} else if (strCommand.equalsIgnoreCase("resetscoreboards")) {
+						if (sender.isOp()) {
+							if (args.length == 0) {
+								if (!this.getPlugin().configValues.scoreboards) {
+									Scoreboard newScoreboard = sender.getServer().getScoreboardManager().getNewScoreboard();
+									for (Player onlinePlayer : sender.getServer().getOnlinePlayers()) {
+										Scoreboard pScoreboard = onlinePlayer.getScoreboard();
+										if (pScoreboard != null && pScoreboard.getObjective(DisplaySlot.SIDEBAR) != null) {
+											String boardTitle = ChatColor.stripColor(pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName());
+											if (boardTitle != null && boardTitle.equalsIgnoreCase("KingKits")) onlinePlayer.setScoreboard(newScoreboard);
+										}
+									}
+									sender.sendMessage(ChatColor.GOLD + "Reset all scoreboards.");
+								} else {
+									sender.sendMessage(ChatColor.RED + "Scoreboards are enabled.");
+								}
+							} else {
+								sender.sendMessage(this.r(Language.CommandLanguage.usageMsg.replaceAll("<usage>", command.toLowerCase() + " " + strCommand.toLowerCase())));
 							}
 						} else {
 							this.sendNoAccess(sender);
