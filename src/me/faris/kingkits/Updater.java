@@ -61,7 +61,7 @@ public class Updater {
 	private static final String QUERY = "/servermods/files?projectIds="; // Path to GET
 	private static final String HOST = "https://api.curseforge.com"; // Slugs will be appended to this to get to the project's RSS feed
 
-	private static final String[] NO_UPDATE_TAG = { "-DEV", "-PRE", "-SNAPSHOT" }; // If the version number contains one of these, don't update.
+	private static final String[] NO_UPDATE_TAG = { "-DEV", "-PRE", "-SNAPSHOT", "Special" }; // If the version number contains one of these, don't update.
 	private static final int BYTE_SIZE = 1024; // Used for downloading files
 	private YamlConfiguration config; // Config file
 	private String updateFolder;// The folder that downloads will be placed in
@@ -412,7 +412,7 @@ public class Updater {
 			if (title.split(" v").length == 2) {
 				final String remoteVersion = title.split(" v")[1].split(" ")[0]; // Get the newest file's version number
 
-				if (this.hasTag(version) || version.equalsIgnoreCase(remoteVersion) || title.contains("Special")) {
+				if (this.hasTag(version) || version.equalsIgnoreCase(remoteVersion)) {
 					// We already have the latest version, or this build is tagged for no-update
 					this.result = Updater.UpdateResult.NO_UPDATE;
 					return false;

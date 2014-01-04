@@ -110,7 +110,7 @@ public class KingKits extends JavaPlugin {
 
 		// Check for updates
 		if (this.configValues.checkForUpdates) {
-			this.updater = new Updater(this, 56371, this.getFile(), Updater.UpdateType.NO_VERSION_CHECK, false);
+			this.updater = new Updater(this, 56371, this.getFile(), Updater.UpdateType.NO_DOWNLOAD, false);
 			if (this.updater.getResult() == UpdateResult.UPDATE_AVAILABLE) {
 				String title = "============================================";
 				String titleSpace = "                                            ";
@@ -125,7 +125,7 @@ public class KingKits extends JavaPlugin {
 				this.logger.info("Your current version: KingKits v" + this.getDescription().getVersion());
 				if (this.configValues.automaticUpdates) {
 					this.logger.info("Downloading " + this.updater.getLatestName() + "...");
-					this.updater = new Updater(this, 56371, this.getFile(), UpdateType.DEFAULT, false);
+					this.updater = new Updater(this, 56371, this.getFile(), UpdateType.NO_VERSION_CHECK, false);
 					UpdateResult updateResult = this.updater.getResult();
 					if (updateResult == UpdateResult.FAIL_APIKEY) this.logger.info("Download failed: Improperly configured the server's API key in the configuration");
 					else if (updateResult == UpdateResult.FAIL_DBO) this.logger.info("Download failed: Could not connect to BukkitDev.");
@@ -198,9 +198,10 @@ public class KingKits extends JavaPlugin {
 
 		// Remove scoreboards
 		if (this.configValues.scoreboards) {
+			Scoreboard globalBoard = this.getServer().getScoreboardManager().getNewScoreboard();
 			for (int pos = 0; pos < this.getServer().getOnlinePlayers().length; pos++) {
 				Player target = this.getServer().getOnlinePlayers()[pos];
-				if (target != null) target.setScoreboard(null);
+				if (target != null) target.setScoreboard(globalBoard);
 			}
 		}
 

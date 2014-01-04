@@ -307,7 +307,7 @@ public class PlayerListener implements Listener {
 									if (pScoreboard == null) pScoreboard = killer.getServer().getScoreboardManager().getNewScoreboard();
 									Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
 									if (sObj == null) {
-										sObj = pScoreboard.registerNewObjective("test", "dummy");
+										sObj = pScoreboard.registerNewObjective("KingKits", "dummy");
 										sObj.setDisplayName(ChatColor.RED + "KingKits");
 										sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
 									}
@@ -717,7 +717,7 @@ public class PlayerListener implements Listener {
 						if (pScoreboard == null) event.getPlayer().getServer().getScoreboardManager().getNewScoreboard();
 						Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
 						if (sObj == null) {
-							sObj = pScoreboard.registerNewObjective("test", "dummy");
+							sObj = pScoreboard.registerNewObjective("KingKits", "dummy");
 							sObj.setDisplayName(ChatColor.RED + "KingKits");
 							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
 						}
@@ -746,7 +746,7 @@ public class PlayerListener implements Listener {
 						if (pScoreboard == null) pScoreboard = event.getEntity().getServer().getScoreboardManager().getNewScoreboard();
 						Objective sObj = pScoreboard.getObjective(DisplaySlot.SIDEBAR);
 						if (sObj == null) {
-							sObj = pScoreboard.registerNewObjective("test", "dummy");
+							sObj = pScoreboard.registerNewObjective("KingKits", "dummy");
 							sObj.setDisplayName(ChatColor.RED + "KingKits");
 							sObj.setDisplaySlot(DisplaySlot.SIDEBAR);
 						}
@@ -904,6 +904,15 @@ public class PlayerListener implements Listener {
 				if (this.getPlugin().configValues.pvpWorlds.contains("All") || this.getPlugin().configValues.pvpWorlds.contains(event.getPlayer().getLocation().getWorld().getName())) {
 					this.showScoreboard(event.getPlayer());
 				}
+			} else {
+				if (event.getPlayer().getScoreboard() != null) {
+					Objective scoreboardObj = event.getPlayer().getScoreboard().getObjective("KingKits");
+					if (scoreboardObj != null) {
+						if (scoreboardObj.getDisplayName().equals(ChatColor.RED + "KingKits")) {
+							event.getPlayer().getScoreboard().clearSlot(DisplaySlot.SIDEBAR);
+						}
+					}
+				}
 			}
 		} catch (Exception ex) {
 		}
@@ -935,7 +944,7 @@ public class PlayerListener implements Listener {
 			Scoreboard pScoreboard = event.getPlayer().getScoreboard();
 			if (pScoreboard != null) {
 				if (pScoreboard.getObjective(DisplaySlot.SIDEBAR) != null) {
-					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(null);
+					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(event.getPlayer().getServer().getScoreboardManager().getNewScoreboard());
 				}
 			}
 		} catch (Exception ex) {
@@ -948,7 +957,7 @@ public class PlayerListener implements Listener {
 			Scoreboard pScoreboard = event.getPlayer().getScoreboard();
 			if (pScoreboard != null) {
 				if (pScoreboard.getObjective(DisplaySlot.SIDEBAR) != null) {
-					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(null);
+					if (pScoreboard.getObjective(DisplaySlot.SIDEBAR).getDisplayName().equals(ChatColor.RED + "KingKits")) event.getPlayer().setScoreboard(event.getPlayer().getServer().getScoreboardManager().getNewScoreboard());
 				}
 			}
 		} catch (Exception ex) {
